@@ -27,6 +27,9 @@ def main():
             api_key=token_provider
         )
 
+        # Track responses
+        last_response_id = None
+
         # Loop until the user wants to quit
         while True:
             input_text = input('\nEnter a prompt (or type "quit" to exit): ')
@@ -36,7 +39,8 @@ def main():
                 print("Please enter a prompt.")
                 continue
 
-            # Get a response
+            '''
+            # Get a response            
             completion = openai_client.chat.completions.create(
                 model=model_deployment,
                 messages=[
@@ -51,6 +55,44 @@ def main():
                 ]
             )
             print(completion.choices[0].message.content)
+            '''
+
+            '''
+            # Get a response
+            response = openai_client.responses.create(
+                        model=model_deployment,
+                        instructions="You are a helpful AI assistant that answers questions and provides information.",
+                        input=input_text
+            )
+            print(response.output_text)
+            '''
+
+            '''
+            # Get a response
+            response = openai_client.responses.create(
+                        model=model_deployment,
+                        instructions="You are a helpful AI assistant that answers questions and provides information.",
+                        input=input_text,
+                        previous_response_id=last_response_id,
+            )
+            print(response.output_text)
+            last_response_id = response.id
+            '''
+
+            # Get a response
+            stream = openai_client.responses.create(
+                        model=model_deployment,
+                        instructions="You are a helpful AI assistant that answers questions and provides information.",
+                        input=input_text,
+                        previous_response_id=last_response_id,
+                        stream=True
+            )
+            for event in stream:
+                if event.type == "response.output_text.delta":
+                    print(event.delta, end="")
+                elif event.type == "response.completed":
+                    last_response_id = event.response.id
+            print()
 
     except Exception as ex:
         print(ex)
